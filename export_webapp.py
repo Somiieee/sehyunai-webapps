@@ -326,6 +326,7 @@ def export_webapp(my_id):
         os.remove(my_id + ".zip")
     shutil.make_archive(my_id, "zip", WEB_DIR)
     print(f"\n{my_id}.zip 완성 {sorted(os.listdir(WEB_DIR))} → 클래스룸 '웹앱 제출'에 그대로 내세요.")
+    print("(선택) 화면을 꾸미고 싶으면 webapp/index.html을 고친 뒤 preview()로 보고 rezip(MY_ID)로 다시 묶어요.")
     try:
         import subprocess as _sp, time as _t
         from google.colab import output, files
@@ -334,6 +335,35 @@ def export_webapp(my_id):
         files.download(my_id + ".zip")
     except Exception:
         pass
+
+
+def rezip(my_id=None, folder=None):
+    """webapp 폴더(꾸민 것, 제미나이로 직접 만든 것 모두)를 그대로 묶어요. 예: rezip("2-1-07")"""
+    my_id = str(my_id or G.get("MY_ID", "")).strip()
+    folder = folder or WEB_DIR
+    if not re.fullmatch(r"\d-\d{1,2}-\d{2}", my_id):
+        _x_stop('rezip("2-1-07")처럼 반-번호를 넣어요.')
+    if not os.path.isfile(f"{folder}/index.html"):
+        _x_stop(f"{folder} 폴더에 index.html이 있어야 해요. 지금: {sorted(os.listdir(folder)) if os.path.isdir(folder) else '폴더 없음'}")
+    if os.path.exists(my_id + ".zip"):
+        os.remove(my_id + ".zip")
+    shutil.make_archive(my_id, "zip", folder)
+    print(f"{my_id}.zip 묶기 완료 {sorted(os.listdir(folder))} → 클래스룸 '웹앱 제출'에 내세요.")
+    try:
+        from google.colab import files as _f
+        _f.download(my_id + ".zip")
+    except Exception:
+        pass
+
+def preview():
+    """webapp 폴더를 새 창으로 미리 봐요."""
+    try:
+        import subprocess as _sp, time as _t
+        from google.colab import output
+        _sp.Popen([sys.executable, "-m", "http.server", "8000", "--directory", WEB_DIR], stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        _t.sleep(1); output.serve_kernel_port_as_window(8000)
+    except Exception as e:
+        print("미리 보기를 열지 못했어요:", e)
 
 if "MY_ID" in G:
     export_webapp(G["MY_ID"])
