@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 반 AI 웹앱 전시장</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400..800&family=Gowun+Batang:wght@700&family=Nanum+Pen+Script&display=swap">
+<style>
+:root{--cream:#FFFBF1;--ink:#4A1027;--maroon:#6B1A35;--body:#5B3A45;--pink:#F7BFE0;--lime:#D9F27A;--blue:#C3D3F4;--coral:#F9B9A3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--pink);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.6;word-break:keep-all}
+.frame{max-width:1080px;margin:0 auto;background:var(--cream);min-height:100vh}
+.topbar{background:var(--lime);text-align:center;font-size:12.5px;font-weight:700;letter-spacing:.12em;padding:7px;color:var(--maroon)}
+header{padding:48px 40px 24px;border-bottom:1.5px solid var(--maroon)}
+h1{font-family:'Gowun Batang',serif;font-size:clamp(28px,4vw,42px);margin:0 0 8px}
+.script{font-family:'Nanum Pen Script',cursive;color:#D9532F;font-size:1.3em;font-weight:400}
+header p{color:var(--body);margin:0}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:20px 40px 0}
+.filters button{border:1.5px solid var(--maroon);background:var(--cream);color:var(--maroon);font:inherit;font-size:14px;font-weight:700;padding:6px 16px;border-radius:999px;cursor:pointer;min-height:40px}
+.filters button[aria-pressed=true]{background:var(--maroon);color:var(--cream)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;padding:24px 40px 56px}
+.card{display:flex;flex-direction:column;gap:6px;border:1.5px solid var(--maroon);border-radius:22px;padding:20px;text-decoration:none;color:var(--ink);transition:transform .15s,box-shadow .15s}
+.card:hover,.card:focus-visible{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--maroon)}
+.card:nth-child(4n+1){background:var(--pink)}.card:nth-child(4n+2){background:var(--blue)}.card:nth-child(4n+3){background:var(--lime)}.card:nth-child(4n){background:var(--coral)}
+.meta{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--maroon)}
+.card h2{font-size:18px;margin:0;flex:1}
+.go{font-size:13px;font-weight:700;text-decoration:underline}
+.empty{padding:40px;color:var(--body)}
+footer{padding:20px 40px;font-size:13px;color:var(--body);border-top:1.5px solid var(--maroon)}
+</style>
+</head>
+<body>
+<div class="frame">
+<div class="topbar">SDG AI 프로젝트 · 학생 웹앱</div>
+<header>
+  <h1>우리 반 AI 웹앱 <span class="script">전시장</span></h1>
+  <p>학생들이 직접 학습시킨 신경망 웹앱이에요. 카드를 눌러 써 보세요. 연습용 AI라 틀릴 수 있어요.</p>
+</header>
+<div class="filters" id="filters" aria-label="반 고르기"></div>
+<main class="grid" id="grid"></main>
+<footer>각 웹앱은 브라우저 안에서만 계산하고, 넣은 글이나 사진을 어디에도 보내지 않아요.</footer>
+</div>
+<script>
+const grid = document.getElementById('grid'), filters = document.getElementById('filters');
+let apps = [], current = '전체';
+function draw(){
+  grid.innerHTML = '';
+  const list = apps.filter(a => current === '전체' || a.class === current);
+  if(!list.length){ grid.innerHTML = '<p class="empty">아직 올라온 웹앱이 없어요.</p>'; return; }
+  for(const a of list){
+    const el = document.createElement('a');
+    el.className = 'card'; el.href = encodeURIComponent(a.id) + '/';
+    const m = document.createElement('span'); m.className = 'meta'; m.textContent = [a.class, a.kind, a.sdg ? 'SDG ' + a.sdg : ''].filter(Boolean).join(' · ');
+    const h = document.createElement('h2'); h.textContent = a.title;
+    const g = document.createElement('span'); g.className = 'go'; g.textContent = '써 보기 →';
+    el.append(m, h, g); grid.append(el);
+  }
+}
+function drawFilters(){
+  const classes = ['전체', ...new Set(apps.map(a => a.class))];
+  filters.innerHTML = '';
+  for(const c of classes){
+    const b = document.createElement('button'); b.textContent = c; b.setAttribute('aria-pressed', c === current);
+    b.onclick = () => { current = c; drawFilters(); draw(); };
+    filters.append(b);
+  }
+}
+fetch('apps.json').then(r => r.json()).then(d => { apps = d; drawFilters(); draw(); })
+  .catch(() => { grid.innerHTML = '<p class="empty">목록(apps.json)을 읽지 못했어요.</p>'; });
+</script>
+</body>
+</html>
